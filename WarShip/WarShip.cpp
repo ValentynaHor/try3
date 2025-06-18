@@ -11,6 +11,7 @@
 #include "iostream"
 #include <ctime>
 #include "string"
+#include <algorithm>
 
 #define MAX_LOADSTRING 100
 //перенайменування макросів
@@ -2166,28 +2167,35 @@ void SetMyArena(HWND hWnd,LPARAM lParam) {
                 if (SetShipPosMenu.nowFocused != -1) 
                     //перевірка наявності вибраного типу кораблів
                 if(PlayerSetNow->Ships[SetShipPosMenu.nowFocused].zalishoknums > 0){
-                    //перевірка накладання корабля на інший
-                    //перевірка встановлення прапора ORIENT
+                    //перевірка встановлення прапора ORIENT та можливості розташування
+                    int shipsize = PlayerSetNow->Ships[SetShipPosMenu.nowFocused].size;
                     if ((flags & (1 << CHECK_ORIENT)) != 0) {
-                        //j     //vert
-                        for (int k = j;
-                            (k - j) < PlayerSetNow->Ships[SetShipPosMenu.nowFocused].size; k++) 
-                        {
-                            //перевірка накладання корабля на інший
-                            if (k >= numRow || PlayerSetNow->ShipMap.myarena[i][k] != 0) {
-                                MessageBoxA(hWnd, (LPCSTR)"Невірне розташування корабля", (LPCSTR)"Помилка", 0);
-                                return;
+                        // вертикальне розташування
+                        if (j + shipsize > numRow) {
+                            MessageBoxA(hWnd, (LPCSTR)"Невірне розташування корабля", (LPCSTR)"Помилка", 0);
+                            return;
+                        }
+                        for (int x = max(0, i - 1); x <= min(numKol - 1, i + 1); ++x) {
+                            for (int y = max(0, j - 1); y <= min(numRow - 1, j + shipsize); ++y) {
+                                if (PlayerSetNow->ShipMap.myarena[x][y] != 0) {
+                                    MessageBoxA(hWnd, (LPCSTR)"Невірне розташування корабля", (LPCSTR)"Помилка", 0);
+                                    return;
+                                }
                             }
                         }
                     }
                     else {
-                        for (int k = i;
-                            (k - i) < PlayerSetNow->Ships[SetShipPosMenu.nowFocused].size; k++)
-                        {
-                            //перевірка накладання корабля на інший
-                            if (k >= numKol || PlayerSetNow->ShipMap.myarena[k][j] != 0) {
-                                MessageBoxA(hWnd, (LPCSTR)"Невірне розташування корабля", (LPCSTR)"Помилка", 0);
-                                return;
+                        // горизонтальне розташування
+                        if (i + shipsize > numKol) {
+                            MessageBoxA(hWnd, (LPCSTR)"Невірне розташування корабля", (LPCSTR)"Помилка", 0);
+                            return;
+                        }
+                        for (int x = max(0, i - 1); x <= min(numKol - 1, i + shipsize); ++x) {
+                            for (int y = max(0, j - 1); y <= min(numRow - 1, j + 1); ++y) {
+                                if (PlayerSetNow->ShipMap.myarena[x][y] != 0) {
+                                    MessageBoxA(hWnd, (LPCSTR)"Невірне розташування корабля", (LPCSTR)"Помилка", 0);
+                                    return;
+                                }
                             }
                         }
                     }
