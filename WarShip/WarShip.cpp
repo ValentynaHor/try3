@@ -1808,8 +1808,6 @@ void PaintArena(/*HWND hWnd*/HDC hdc) {
 
 //ініціалізація і розміщення кораблів
 void GenerateNumOfShips() {
-    srand((unsigned)time(0));
-
     const int N = 4;
 
     Player1.ShipMap.myarena = new int*[numKol];
@@ -1850,85 +1848,52 @@ void GenerateNumOfShips() {
     Player1.BiggestShip = N;
     Player2.BiggestShip = N;
 
+    Player1.hits = Player1.Kills = Player1.CountShot = 0;
+    Player2.hits = Player2.Kills = Player2.CountShot = 0;
+    Player1.Ready = false;
+    Player2.Ready = false;
+
     Player1.Ships = new MyShips[N];
     Player2.Ships = new MyShips[N];
 
-    int nums[N] = {4,3,2,1};
+    int nums[N] = {4, 3, 2, 1};
     for (int i = 0; i < N; ++i) {
         Player1.Ships[i].size = i + 1;
         Player1.Ships[i].nums = nums[i];
         Player1.Ships[i].zalishoknums = nums[i];
-        Player1.Ships[i].posKols = new int[nums[i]];
-        Player1.Ships[i].posRows = new int[nums[i]];
-        Player1.Ships[i].orientation = new bool[nums[i]];
-        Player1.Ships[i].dead = new bool[nums[i]];
-        Player1.Ships[i].damage = new int[nums[i]];
 
         Player2.Ships[i].size = i + 1;
         Player2.Ships[i].nums = nums[i];
         Player2.Ships[i].zalishoknums = nums[i];
+
+        Player1.Ships[i].posKols = new int[nums[i]];
+        Player1.Ships[i].posRows = new int[nums[i]];
+        Player1.Ships[i].orientation = new bool[nums[i]];
+        Player1.Ships[i].damage = new int[nums[i]];
+        Player1.Ships[i].dead = new bool[nums[i]];
+
         Player2.Ships[i].posKols = new int[nums[i]];
         Player2.Ships[i].posRows = new int[nums[i]];
         Player2.Ships[i].orientation = new bool[nums[i]];
-        Player2.Ships[i].dead = new bool[nums[i]];
         Player2.Ships[i].damage = new int[nums[i]];
-    }
+        Player2.Ships[i].dead = new bool[nums[i]];
 
-    auto canPlace = [](MyPlayers& pl, int x, int y, int size, bool vert) {
-        int x0 = x - 1;
-        int y0 = y - 1;
-        int x1 = vert ? x + 1 : x + size;
-        int y1 = vert ? y + size : y + 1;
+        for (int n = 0; n < nums[i]; ++n) {
+            Player1.Ships[i].posKols[n] = -1;
+            Player1.Ships[i].posRows[n] = -1;
+            Player1.Ships[i].orientation[n] = false;
+            Player1.Ships[i].damage[n] = 0;
+            Player1.Ships[i].dead[n] = false;
 
-        if (vert) {
-            if (y + size > numRow) return false;
-        } else {
-            if (x + size > numKol) return false;
+            Player2.Ships[i].posKols[n] = -1;
+            Player2.Ships[i].posRows[n] = -1;
+            Player2.Ships[i].orientation[n] = false;
+            Player2.Ships[i].damage[n] = 0;
+            Player2.Ships[i].dead[n] = false;
         }
-
-        for (int i = x0; i <= x1; ++i)
-            for (int j = y0; j <= y1; ++j)
-                if (i >= 0 && j >= 0 && i < numKol && j < numRow)
-                    if (pl.ShipMap.myarena[i][j] != 0)
-                        return false;
-        return true;
-    };
-
-    auto placeShip = [&](MyPlayers& pl, int sIndex) {
-        int size = pl.Ships[sIndex].size;
-        for (int n = 0; n < pl.Ships[sIndex].nums; ++n) {
-            bool placed = false;
-            while (!placed) {
-                bool vert = rand() % 2;
-                int x = rand() % numKol;
-                int y = rand() % numRow;
-                if (!canPlace(pl, x, y, size, vert))
-                    continue;
-                for (int k = 0; k < size; ++k) {
-                    int cx = vert ? x : x + k;
-                    int cy = vert ? y + k : y;
-                    pl.ShipMap.myarena[cx][cy] = (k == 0) ? 2 : 1;
-                    pl.ShipMap.ShipSize[cx][cy] = size;
-                    pl.ShipMap.ShipNum[cx][cy] = n;
-                }
-                pl.Ships[sIndex].orientation[n] = vert;
-                pl.Ships[sIndex].posKols[n] = x;
-                pl.Ships[sIndex].posRows[n] = y;
-                pl.Ships[sIndex].dead[n] = false;
-                pl.Ships[sIndex].damage[n] = 0;
-                placed = true;
-            }
-        }
-    };
-
-    for (int s = N - 1; s >= 0; --s) {
-        placeShip(Player1, s);
-        placeShip(Player2, s);
     }
 
     numShips = 0;
-    for (int i = 0; i < N; ++i)
-        numShips += nums[i];
 }
 
 //отримати юзернейм користувача
