@@ -1913,51 +1913,44 @@ int WchartSize(wchar_t* mystr) {
 
 //генерація поля бота
 void SetBotArena() {
-    int check = 0;//перевірка правильного розташування
     int i = 0, j = 0;//координати клітинки
     int SelectMenu = 0;//SetShipPosMenu.nowFocused (розмір вибраного корабля)
     int Orient = 0;
     srand(time(0));//генерація не псевдовипадкова
 
     SelectMenu = PlayerSetNow->BiggestShip - 1;//спочатку розставимо найбільші кораблі
-    //поки наявні однопалубні кораблі
-    while (PlayerSetNow->Ships[0].zalishoknums > 0)//>= ?
-    {
-        while (PlayerSetNow->Ships[(SelectMenu>=0)?(SelectMenu):(0)].zalishoknums > 0)
-        {
-            check = 0;
-            Orient = rand() % 2;//0..1
+    while (SelectMenu >= 0) {
+        while (PlayerSetNow->Ships[SelectMenu].zalishoknums > 0) {
+            bool valid = false;
+            while (!valid) {
+                Orient = rand() % 2;//0..1
 
-            i = rand() % numKol;//0..numKol-1
-            j = rand() % numRow;
-            
-            //перевірка накладання корабля на інший
-            //перевірка встановлення прапора ORIENT
-            if (Orient==1) {
-                //j     //vert
-                for (int k = j;
-                    (k - j) < PlayerSetNow->Ships[SelectMenu].size; k++)
-                {
-                    //перевірка накладання корабля на інший
-                    if (k >= numRow || PlayerSetNow->ShipMap.myarena[i][k] != 0) {
-                        check = 1;
+                i = rand() % numKol;//0..numKol-1
+                j = rand() % numRow;
+                int shipsize = PlayerSetNow->Ships[SelectMenu].size;
+
+                if (Orient == 1) {
+                    if (j + shipsize > numRow)
+                        continue;
+                    valid = true;
+                    for (int x = max(0, i - 1); x <= min(numKol - 1, i + 1) && valid; ++x) {
+                        for (int y = max(0, j - 1); y <= min(numRow - 1, j + shipsize) && valid; ++y) {
+                            if (PlayerSetNow->ShipMap.myarena[x][y] != 0)
+                                valid = false;
+                        }
                     }
                 }
-                if (check)
-                    break;
-            }
-            else {
-                for (int k = i;
-                    (k - i) < PlayerSetNow->Ships[SelectMenu].size; k++)
-                {
-                    //перевірка накладання корабля на інший
-                    if (k >= numKol || PlayerSetNow->ShipMap.myarena[k][j] != 0) {
-                        //MessageBoxA(hWnd, (LPCSTR)"Невірне розташування корабля", (LPCSTR)"Помилка", 0);
-                        check = 1;
+                else {
+                    if (i + shipsize > numKol)
+                        continue;
+                    valid = true;
+                    for (int x = max(0, i - 1); x <= min(numKol - 1, i + shipsize) && valid; ++x) {
+                        for (int y = max(0, j - 1); y <= min(numRow - 1, j + 1) && valid; ++y) {
+                            if (PlayerSetNow->ShipMap.myarena[x][y] != 0)
+                                valid = false;
+                        }
                     }
                 }
-                if (check)
-                    break;
             }
 
             PlayerSetNow->Ships[SelectMenu].zalishoknums--;
@@ -1966,35 +1959,23 @@ void SetBotArena() {
             PlayerSetNow->Ships[SelectMenu].posKols[PlayerSetNow->Ships[SelectMenu].zalishoknums] = i;
             PlayerSetNow->Ships[SelectMenu].posRows[PlayerSetNow->Ships[SelectMenu].zalishoknums] = j;
 
-            //перевірка встановлення прапора ORIENT
             if (Orient == 1) {
-                //j     //vert
-                for (int k = j;
-                    (k - j) < PlayerSetNow->Ships[SelectMenu].size; k++)
-                {
-                    PlayerSetNow->ShipMap.myarena[i][k] = (k == j) ? (2) : (1);//"голова" корабля == 2
+                for (int k = j; (k - j) < shipsize; k++) {
+                    PlayerSetNow->ShipMap.myarena[i][k] = (k == j) ? 2 : 1;
                     PlayerSetNow->ShipMap.ShipNum[i][k] = PlayerSetNow->Ships[SelectMenu].zalishoknums;
-                    PlayerSetNow->ShipMap.ShipSize[i][k] = PlayerSetNow->Ships[SelectMenu].size;
+                    PlayerSetNow->ShipMap.ShipSize[i][k] = shipsize;
                 }
                 PlayerSetNow->Ships[SelectMenu].orientation[PlayerSetNow->Ships[SelectMenu].zalishoknums] = true;
-            }
-            else {
-                //i
-                for (int k = i;
-                    (k - i) < PlayerSetNow->Ships[SelectMenu].size; k++)
-                {
-                    PlayerSetNow->ShipMap.myarena[k][j] = (k == i) ? (2) : (1);//"голова" корабля == 2
+            } else {
+                for (int k = i; (k - i) < shipsize; k++) {
+                    PlayerSetNow->ShipMap.myarena[k][j] = (k == i) ? 2 : 1;
                     PlayerSetNow->ShipMap.ShipNum[k][j] = PlayerSetNow->Ships[SelectMenu].zalishoknums;
-                    PlayerSetNow->ShipMap.ShipSize[k][j] = PlayerSetNow->Ships[SelectMenu].size;
+                    PlayerSetNow->ShipMap.ShipSize[k][j] = shipsize;
                 }
                 PlayerSetNow->Ships[SelectMenu].orientation[PlayerSetNow->Ships[SelectMenu].zalishoknums] = false;
             }
-
-        //перевіряємо чи завершили розставляти кораблі вибраного типу (розміру)
-        if (PlayerSetNow->Ships[SelectMenu].zalishoknums == 0 && SelectMenu>=0)
-            SelectMenu--;
-
         }
+        SelectMenu--;
     }
     //запис мап у файли
     /*
