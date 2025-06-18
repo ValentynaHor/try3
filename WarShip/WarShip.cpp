@@ -1931,33 +1931,35 @@ void SetBotArena() {
             i = rand() % numKol;//0..numKol-1
             j = rand() % numRow;
             
-            //перевірка накладання корабля на інший
-            //перевірка встановлення прапора ORIENT
-            if (Orient==1) {
-                //j     //vert
-                for (int k = j;
-                    (k - j) < PlayerSetNow->Ships[SelectMenu].size; k++)
-                {
-                    //перевірка накладання корабля на інший
-                    if (k >= numRow || PlayerSetNow->ShipMap.myarena[i][k] != 0) {
-                        check = 1;
+            // перевірка можливості розташування з урахуванням дистанції
+            int shipsize = PlayerSetNow->Ships[SelectMenu].size;
+            if (Orient == 1) {
+                // вертикальне розташування
+                if (j + shipsize > numRow) continue;
+                for (int x = max(0, i - 1); x <= min(numKol - 1, i + 1); ++x) {
+                    for (int y = max(0, j - 1); y <= min(numRow - 1, j + shipsize); ++y) {
+                        if (PlayerSetNow->ShipMap.myarena[x][y] != 0) {
+                            check = 1;
+                            break;
+                        }
                     }
+                    if (check) break;
                 }
-                if (check)
-                    break;
+                if (check) continue;
             }
             else {
-                for (int k = i;
-                    (k - i) < PlayerSetNow->Ships[SelectMenu].size; k++)
-                {
-                    //перевірка накладання корабля на інший
-                    if (k >= numKol || PlayerSetNow->ShipMap.myarena[k][j] != 0) {
-                        //MessageBoxA(hWnd, (LPCSTR)"Невірне розташування корабля", (LPCSTR)"Помилка", 0);
-                        check = 1;
+                // горизонтальне розташування
+                if (i + shipsize > numKol) continue;
+                for (int x = max(0, i - 1); x <= min(numKol - 1, i + shipsize); ++x) {
+                    for (int y = max(0, j - 1); y <= min(numRow - 1, j + 1); ++y) {
+                        if (PlayerSetNow->ShipMap.myarena[x][y] != 0) {
+                            check = 1;
+                            break;
+                        }
                     }
+                    if (check) break;
                 }
-                if (check)
-                    break;
+                if (check) continue;
             }
 
             PlayerSetNow->Ships[SelectMenu].zalishoknums--;
