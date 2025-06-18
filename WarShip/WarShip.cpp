@@ -2346,17 +2346,11 @@ void Shooting(HWND hWnd, LPARAM lParam) {
                     //
                     InvalidateRect(hWnd, NULL, TRUE);
 
-                    //формування рядка для MessageBoxA
+                    // сформувати переможне повідомлення
                     std::wstring message = PlayerSetNow->name;
-                    message += L" Переміг!"; // додавання тексту
-                    //довжина рядка
-                    int messageLen = WideCharToMultiByte(CP_UTF8, 0, message.c_str(), -1, nullptr, 0, nullptr, nullptr);
-                    std::string messageA(messageLen, 0);
-                    //перетворення тексту в код anci
-                    WideCharToMultiByte(CP_ACP, 0, message.c_str(), -1, &messageA[0], messageLen, nullptr, nullptr);
-                    LPCSTR messageA_lpcstr = messageA.c_str(); // конвертація в LPCSTR
-                    //
-                    MessageBoxA(hWnd, messageA_lpcstr, (LPCSTR)"кораблик", 0);
+                    message += L" won the game!\nTotal shots: ";
+                    message += std::to_wstring(PlayerSetNow->CountShot);
+                    MessageBoxW(hWnd, message.c_str(), L"Battleship", MB_OK);
                     Peremoga(hWnd);
                     return;
                 }
@@ -2546,17 +2540,11 @@ void BotStep(HWND hWnd) {
                     // -//-
                     //
                     InvalidateRect(hWnd, NULL, TRUE);
-                    //формування рядка для MessageBoxA
+                    // сформувати переможне повідомлення
                     std::wstring message = PlayerOponent->name;
-                    message += L" Переміг!"; // додавання тексту
-                    //довжина рядка
-                    int messageLen = WideCharToMultiByte(CP_UTF8, 0, message.c_str(), -1, nullptr, 0, nullptr, nullptr);
-                    std::string messageA(messageLen, 0);
-                    //перетворення тексту в код anci
-                    WideCharToMultiByte(CP_ACP, 0, message.c_str(), -1, &messageA[0], messageLen, nullptr, nullptr);
-                    LPCSTR messageA_lpcstr = messageA.c_str(); // конвертація в LPCSTR
-                    //
-                    MessageBoxA(hWnd, messageA_lpcstr, (LPCSTR)"кораблик", 0);
+                    message += L" won the game!\nTotal shots: ";
+                    message += std::to_wstring(PlayerOponent->CountShot);
+                    MessageBoxW(hWnd, message.c_str(), L"Battleship", MB_OK);
                     Peremoga(hWnd);
                     return;
                 }
