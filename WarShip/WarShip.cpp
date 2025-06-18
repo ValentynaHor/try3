@@ -66,15 +66,15 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // им'я класу голов
 //прапори
 char flags = 0;
 // ||| x //кільк стовпців
-int numKol = 5;
+int numKol = 15;
 // = y //кільк рядків
-int numRow = 3;
+int numRow = 15;
 // ||| x //кільк стовпців попередньої гри
-int prevnumKol = 5;
+int prevnumKol = 25;
 // = y //кільк рядків попередньої гри
-int prevnumRow = 3;
+int prevnumRow = 40;
 //початкова висота ширина програми
-int height = 600, width = 500;
+int height = 1080, width = 1920;
 //висота/ширина інформаційної області під час гри
 int heightHeader = 80, widthHeader = 50;
 //позиція курсору при кліку
@@ -160,7 +160,7 @@ struct MyPlayers
 {
     MyPlayers() {
         memset(name, 0, sizeof(name));//обнулення
-        wcscpy_s(name, L"Player");//стандартне ім'я
+        wcscpy_s(name, L"Гравець");//стандартне ім'я
     }
     //ім'я
     wchar_t name[255];
@@ -367,8 +367,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    //вирахувати розмір вікна програми залежно від розміра екрану
    //width = GetSystemMetrics(SM_CXSCREEN) / 4 * 3;
    //height = GetSystemMetrics(SM_CYSCREEN) / 4 * 3;
-   width = GetSystemMetrics(SM_CXSCREEN);
-   height = GetSystemMetrics(SM_CYSCREEN);
+   //width = GetSystemMetrics(SM_CXSCREEN);
+   //height = GetSystemMetrics(SM_CYSCREEN);
 
    HWND hWnd = CreateWindowW(szWindowClass, 
        szTitle, 
@@ -608,7 +608,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
                 PlayerSetNow = &Player1;
                 PlayerOponent = &Player2;
-            wcscpy_s(Player2.name, L"Bot");//далі - якщо гра не з ботом - ім'я 2го гравця зміниться
+            wcscpy_s(Player2.name, L"Бот");//далі - якщо гра не з ботом - ім'я 2го гравця зміниться
 
             //перевірка встановлення прапора гри з ботом
             if ( ((flags & (1 << CHECK_PLAY_WITH_BOT)) == 0) )
@@ -992,7 +992,39 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_INITDIALOG:
+    {
+        // Центрування вікна
+        HWND hParent = GetParent(hDlg);
+        if (!hParent) hParent = GetDesktopWindow();
+
+        RECT rcDlg, rcParent;
+        GetWindowRect(hDlg, &rcDlg);
+        GetWindowRect(hParent, &rcParent);
+
+        int dlgWidth = rcDlg.right - rcDlg.left;
+        int dlgHeight = rcDlg.bottom - rcDlg.top;
+        int parentWidth = rcParent.right - rcParent.left;
+        int parentHeight = rcParent.bottom - rcParent.top;
+
+        int x = rcParent.left + (parentWidth - dlgWidth) / 2;
+        int y = rcParent.top + (parentHeight - dlgHeight) / 2;
+
+        MoveWindow(hDlg, x, y, dlgWidth, dlgHeight, TRUE);
+
+        // Текст правил гри
+        const wchar_t* rules =
+            L"🔹 Правила гри «Морський бій»:\r\n"
+            L"\r\n"
+            L"1. Мета гри — знищити всі кораблі супротивника.\r\n"
+            L"2. У кожного є своє поле для розміщення кораблів.\r\n"
+            L"3. Кораблі мають фіксовану кількість палуб.\r\n"
+            L"4. Гравець стріляє по клітинках противника.\r\n"
+            L"5. Поранення — якщо влучив у корабель.\r\n"
+            L"6. Гра завершується, коли всі кораблі знищені.\r\n";
+
+        SetDlgItemTextW(hDlg, IDC_STATIC, rules); // або інший ID, якщо в тебе є окремий EDITTEXT
         return (INT_PTR)TRUE;
+    }
 
     case WM_COMMAND:
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
@@ -1004,6 +1036,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     }
     return (INT_PTR)FALSE;
 }
+
 
 //обробник подій для діалогу отримання імен гравців
 INT_PTR CALLBACK GetNameProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam){
@@ -1109,23 +1142,43 @@ INT_PTR CALLBACK ChangeSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPAR
     switch (message)
     {
     case WM_INITDIALOG:
-        //Запишему у текстові змінні збережену інформацію
-        swprintf_s(StrnumKol, L"%d", numKol);
-        swprintf_s(StrnumRow, L"%d", numRow);
-        swprintf_s(StrCellSide, L"%d", CellSide);
-        swprintf_s(StrPercentShip, L"%d", percentAllShips);
+        // Центрування вікна
+    {
+        HWND hParent = GetParent(hDlg);
+        if (!hParent) hParent = GetDesktopWindow();
 
-        //Запишему у текстові поля збережену інформацію
-        SendMessageW(hEditKol, WM_SETTEXT, 0, (LPARAM)StrnumKol);
-        SendMessageW(hEditRow, WM_SETTEXT, 0, (LPARAM)StrnumRow);
-        SendMessageW(hEditCellSide, WM_SETTEXT, 0, (LPARAM)StrCellSide);
-        SendMessageW(hEditPercentShip, WM_SETTEXT, 0, (LPARAM)StrPercentShip);
+        RECT rcDlg, rcParent;
+        GetWindowRect(hDlg, &rcDlg);
+        GetWindowRect(hParent, &rcParent);
 
-        //встановимо збережений стан прапорця
-        SendMessageW(hCheckboxBot, BM_SETCHECK, 
-            (((flags & (1 << CHECK_PLAY_WITH_BOT)) == 1)) ? (BST_CHECKED) : (BST_UNCHECKED), 0);
+        int dlgWidth = rcDlg.right - rcDlg.left;
+        int dlgHeight = rcDlg.bottom - rcDlg.top;
+        int parentWidth = rcParent.right - rcParent.left;
+        int parentHeight = rcParent.bottom - rcParent.top;
 
-        return (INT_PTR)TRUE;
+        int x = rcParent.left + (parentWidth - dlgWidth) / 2;
+        int y = rcParent.top + (parentHeight - dlgHeight) / 2;
+
+        MoveWindow(hDlg, x, y, dlgWidth, dlgHeight, TRUE);
+    }
+
+    //Запишему у текстові змінні збережену інформацію
+    swprintf_s(StrnumKol, L"%d", numKol);
+    swprintf_s(StrnumRow, L"%d", numRow);
+    swprintf_s(StrCellSide, L"%d", CellSide);
+    swprintf_s(StrPercentShip, L"%d", percentAllShips);
+
+    //Запишему у текстові поля збережену інформацію
+    SendMessageW(hEditKol, WM_SETTEXT, 0, (LPARAM)StrnumKol);
+    SendMessageW(hEditRow, WM_SETTEXT, 0, (LPARAM)StrnumRow);
+    SendMessageW(hEditCellSide, WM_SETTEXT, 0, (LPARAM)StrCellSide);
+    SendMessageW(hEditPercentShip, WM_SETTEXT, 0, (LPARAM)StrPercentShip);
+
+    //встановимо збережений стан прапорця
+    SendMessageW(hCheckboxBot, BM_SETCHECK,
+        ((flags & (1 << CHECK_PLAY_WITH_BOT)) ? BST_CHECKED : BST_UNCHECKED), 0);
+
+    return (INT_PTR)TRUE;
 
         break;
 
@@ -1879,7 +1932,7 @@ void GenerateNumOfShips() {
             Player1.Ships[i].posKols[j] = -1;
             Player1.Ships[i].posRows[j] = -1;
             Player1.Ships[i].dead[j] = 0;
-            Player1.Ships[i].damage[j] = 0;
+           Player1.Ships[i].damage[j] = 0;
 
             Player2.Ships[i].posKols[j] = -1;
             Player2.Ships[i].posRows[j] = -1;
