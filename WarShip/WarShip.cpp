@@ -1806,42 +1806,36 @@ void PaintArena(/*HWND hWnd*/HDC hdc) {
     MoveWindow(BShowMyArena.hControl, MainRect2.left - HScrolInf.nPos, SetShipPosMenu.SetMenuRect[0].bottom - VScrolInf.nPos, 250, MainRect2.top - SetShipPosMenu.SetMenuRect[0].bottom, false);
 }
 
-//генерація оптимальної кількості кораблів
+//ініціалізація і розміщення кораблів
 void GenerateNumOfShips() {
+    srand((unsigned)time(0));
 
-    int PoleSize = numKol * numRow;//всього клітинок на полі
+    const int N = 4;
 
-    //int PoleSize = numKol * numRow;//всього клітинок на полі
-    int CellsForShips = floor(PoleSize * (percentAllShips / 100.0));//кількість клітинок для кораблів
-    int N = 1;//найбільший тип корабля
-    for (; 2 * N < CellsForShips * 0.2 && N < numKol/2 && N < numRow/2; N++) {}
+    Player1.ShipMap.myarena = new int*[numKol];
+    Player1.ShipMap.oponentarena = new int*[numKol];
+    Player1.ShipMap.ShipNum = new int*[numKol];
+    Player1.ShipMap.ShipSize = new int*[numKol];
 
-    //генерація мап пострілів
-    Player1.ShipMap.myarena = new int* [numKol];
-    Player1.ShipMap.oponentarena = new int* [numKol];
-    Player1.ShipMap.ShipNum = new int* [numKol];
-    Player1.ShipMap.ShipSize = new int* [numKol];
+    Player2.ShipMap.myarena = new int*[numKol];
+    Player2.ShipMap.oponentarena = new int*[numKol];
+    Player2.ShipMap.ShipNum = new int*[numKol];
+    Player2.ShipMap.ShipSize = new int*[numKol];
 
-    Player2.ShipMap.myarena = new int* [numKol];
-    Player2.ShipMap.oponentarena = new int* [numKol];
-    Player2.ShipMap.ShipNum = new int* [numKol];
-    Player2.ShipMap.ShipSize = new int* [numKol];
-
-    //виділення пам'яті для мап
-    for (int i = 0; i < numKol; i++) {
+    for (int i = 0; i < numKol; ++i) {
         Player1.ShipMap.myarena[i] = new int[numRow];
         Player1.ShipMap.oponentarena[i] = new int[numRow];
         Player1.ShipMap.ShipNum[i] = new int[numRow];
         Player1.ShipMap.ShipSize[i] = new int[numRow];
-        
+
         Player2.ShipMap.myarena[i] = new int[numRow];
         Player2.ShipMap.oponentarena[i] = new int[numRow];
         Player2.ShipMap.ShipNum[i] = new int[numRow];
         Player2.ShipMap.ShipSize[i] = new int[numRow];
     }
-    //обнулення мап
-    for (int i = 0; i < numKol; i++) {
-        for (int j = 0; j < numRow; j++) {
+
+    for (int i = 0; i < numKol; ++i)
+        for (int j = 0; j < numRow; ++j) {
             Player1.ShipMap.myarena[i][j] = 0;
             Player1.ShipMap.oponentarena[i][j] = 0;
             Player1.ShipMap.ShipNum[i][j] = 0;
@@ -1852,104 +1846,89 @@ void GenerateNumOfShips() {
             Player2.ShipMap.ShipNum[i][j] = 0;
             Player2.ShipMap.ShipSize[i][j] = 0;
         }
-    }
 
-    //запис найбільшого рангу корабля
     Player1.BiggestShip = N;
     Player2.BiggestShip = N;
 
     Player1.Ships = new MyShips[N];
     Player2.Ships = new MyShips[N];
-    //ініціалізація розмірів кораблів
-    for (int i = 0; i < N; i++) {
+
+    int nums[N] = {4,3,2,1};
+    for (int i = 0; i < N; ++i) {
         Player1.Ships[i].size = i + 1;
+        Player1.Ships[i].nums = nums[i];
+        Player1.Ships[i].zalishoknums = nums[i];
+        Player1.Ships[i].posKols = new int[nums[i]];
+        Player1.Ships[i].posRows = new int[nums[i]];
+        Player1.Ships[i].orientation = new bool[nums[i]];
+        Player1.Ships[i].dead = new bool[nums[i]];
+        Player1.Ships[i].damage = new int[nums[i]];
+
         Player2.Ships[i].size = i + 1;
+        Player2.Ships[i].nums = nums[i];
+        Player2.Ships[i].zalishoknums = nums[i];
+        Player2.Ships[i].posKols = new int[nums[i]];
+        Player2.Ships[i].posRows = new int[nums[i]];
+        Player2.Ships[i].orientation = new bool[nums[i]];
+        Player2.Ships[i].dead = new bool[nums[i]];
+        Player2.Ships[i].damage = new int[nums[i]];
     }
 
-    //delete у кінці функції
-    int* CellsshipN = new int[N];//кількість клітинок для кожного типу корабля
-    int* CellToshipN = new int[N];//перенесення остачі клітинок від кораблів вищого рангу до кораблів нижчого
-    double* percentshipN = new double[N];//відсотки кораблів від дозволеної кількості клітинок
+    auto canPlace = [](MyPlayers& pl, int x, int y, int size, bool vert) {
+        int x0 = x - 1;
+        int y0 = y - 1;
+        int x1 = vert ? x + 1 : x + size;
+        int y1 = vert ? y + size : y + 1;
 
-    CellsForShips = floor(PoleSize * (percentAllShips / 100.0));//кількість клітинок для кораблів
+        if (vert) {
+            if (y + size > numRow) return false;
+        } else {
+            if (x + size > numKol) return false;
+        }
 
-    //генерація процентажу для кожного типу корабля
-    if (N == 1) {
-        //якщо однопалубний корабель найбільший - йому всі 100%
-        percentshipN[0] = 100;
-    }
-    else
-    {
-        double sum = 0;//скільки використали від ста відсотків
-        //percentshipN[N - 1] = 40;//найбільший корабель займає відсотків
-        percentshipN[N - 1] = 2 * 100/N;//найбільший корабель займає відсотків
-        sum += percentshipN[N - 1];//сумма використаних відсотків клітин()
-        for (int i = N - 2; i >= 0; i--) {
-            if (i == 0) {
-                //якщо розрахунок для останнього(однопалубного) корабля-віддаємо весь залишок відсотків
-                percentshipN[i] = 100 - sum;
-                //if (percentshipN[i] == 0)percentshipN[i] = 1;//якщо буде 0 - зробити хочаб 1--
-            }
-            else {
-                percentshipN[i] = rand() % (int)(100 - sum - i);//
-                //якщо відсоток кораблів менший за необхідний для одного корабля
-                //виділяємо стільки, аби вистачило на 1 корабель
-                if(percentshipN[i] < double((double)(Player1.Ships[i].size)/CellsForShips))
-                    percentshipN[i] = double((double)(Player1.Ships[i].size) / CellsForShips);
+        for (int i = x0; i <= x1; ++i)
+            for (int j = y0; j <= y1; ++j)
+                if (i >= 0 && j >= 0 && i < numKol && j < numRow)
+                    if (pl.ShipMap.myarena[i][j] != 0)
+                        return false;
+        return true;
+    };
 
-                sum += percentshipN[i];//перерахунок використаних відсотків
+    auto placeShip = [&](MyPlayers& pl, int sIndex) {
+        int size = pl.Ships[sIndex].size;
+        for (int n = 0; n < pl.Ships[sIndex].nums; ++n) {
+            bool placed = false;
+            while (!placed) {
+                bool vert = rand() % 2;
+                int x = rand() % numKol;
+                int y = rand() % numRow;
+                if (!canPlace(pl, x, y, size, vert))
+                    continue;
+                for (int k = 0; k < size; ++k) {
+                    int cx = vert ? x : x + k;
+                    int cy = vert ? y + k : y;
+                    pl.ShipMap.myarena[cx][cy] = (k == 0) ? 2 : 1;
+                    pl.ShipMap.ShipSize[cx][cy] = size;
+                    pl.ShipMap.ShipNum[cx][cy] = n;
+                }
+                pl.Ships[sIndex].orientation[n] = vert;
+                pl.Ships[sIndex].posKols[n] = x;
+                pl.Ships[sIndex].posRows[n] = y;
+                pl.Ships[sIndex].dead[n] = false;
+                pl.Ships[sIndex].damage[n] = 0;
+                placed = true;
             }
         }
+    };
+
+    for (int s = N - 1; s >= 0; --s) {
+        placeShip(Player1, s);
+        placeShip(Player2, s);
     }
 
-    //кількість кожного типу корабля
-    CellToshipN[N - 1] = 0;//найвищий ранг рахуємо першим, йому остачі ніхто не лишав
-    for (int i = N - 1; i >= 0; i--) {
-        CellsshipN[i] = CellToshipN[i] + floor(CellsForShips * (double)(percentshipN[i] / 100.0));//клеток для кор
-        Player1.Ships[i].nums = floor((double)(CellsshipN[i] / Player1.Ships[i].size));//кількість кораблів
-        if (Player1.Ships[i].nums <= 0)
-            Player1.Ships[i].nums = 1;//якщо раптом залишиться 0 - зробити 1
-        Player1.Ships[i].zalishoknums = Player1.Ships[i].nums;
-        Player1.Ships[i].posKols = new int[Player1.Ships[i].nums];
-        Player1.Ships[i].posRows = new int[Player1.Ships[i].nums];
-        Player1.Ships[i].orientation = new bool[Player1.Ships[i].nums];
-        Player1.Ships[i].dead = new bool[Player1.Ships[i].nums];
-        Player1.Ships[i].damage = new int[Player1.Ships[i].nums];
-
-        Player2.Ships[i].nums = Player1.Ships[i].nums;
-        Player2.Ships[i].zalishoknums = Player2.Ships[i].nums;
-        Player2.Ships[i].posKols = new int[Player2.Ships[i].nums];
-        Player2.Ships[i].posRows = new int[Player2.Ships[i].nums];
-        Player2.Ships[i].orientation = new bool[Player2.Ships[i].nums];
-        Player2.Ships[i].dead = new bool[Player2.Ships[i].nums];
-        Player2.Ships[i].damage = new int[Player2.Ships[i].nums];
-        //якщо це не 1палубний корабель, залишок клітинок перераховуємо на ранг нижчому кораблю
-        if (i != 0)CellToshipN[i - 1] = CellsshipN[i] - (Player1.Ships[i].nums * Player1.Ships[i].size);
-    }
-    //обнулення
-    for (int i = 0; i < Player1.BiggestShip; i++) {
-        for (int j = 0; j < Player1.Ships[i].nums; j++) {
-            Player1.Ships[i].posKols[j] = -1;
-            Player1.Ships[i].posRows[j] = -1;
-            Player1.Ships[i].dead[j] = 0;
-           Player1.Ships[i].damage[j] = 0;
-
-            Player2.Ships[i].posKols[j] = -1;
-            Player2.Ships[i].posRows[j] = -1;
-            Player2.Ships[i].dead[j] = 0;
-            Player2.Ships[i].damage[j] = 0;
-        }
-    }
-
-    //запис загальної кількоті кораблів
     numShips = 0;
-    for (int i = 0; i < N;i++) {
-        numShips += Player1.Ships[i].nums;
-    }
-
-    delete[] CellsshipN;
-    delete[] CellToshipN;
-    delete[] percentshipN;
+    for (int i = 0; i < N; ++i)
+        numShips += nums[i];
 }
 
 //отримати юзернейм користувача
