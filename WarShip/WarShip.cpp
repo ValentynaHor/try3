@@ -86,6 +86,8 @@ int CellSide = 30;
 int percentAllShips = 33;
 //всього кораблів
 int numShips = 0;
+//флаг завершення гри
+bool GAME_IS_OVER = false;
 //поточний час
 time_t tnow = 0;
 //час системи на початку гри
@@ -404,7 +406,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_LBUTTONDOWN:
 
         //перевірка встановлення прапора початку гри
-        if (((flags & (1 << CHECK_GAME_IS_STARTED)) != 0)) {
+        if (((flags & (1 << CHECK_GAME_IS_STARTED)) != 0) && !GAME_IS_OVER) {
             Shooting( hWnd, lParam);
         }
         //перевірка встановлення прапора початку гри
@@ -724,6 +726,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                              
                              //час початку гри
                              TimeStart = time(0);
+                             GAME_IS_OVER = false;
                          }
                          else {
                              InvalidateRect(hWnd, NULL, TRUE);//очистити поле перед тим як 2й гравець почне розставляти кораблі
@@ -778,6 +781,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             SetScrollInfo(hWnd, SB_HORZ, &HScrolInf, TRUE);
             //час початку гри
             TimeStart = time(0);
+            GAME_IS_OVER = false;
             //формування рядка для MessageBoxA
             std::wstring message = PlayerSetNow->name;
             message += L" робить постріл!"; // додавання тексту
@@ -2293,6 +2297,7 @@ void SetMyArena(HWND hWnd,LPARAM lParam) {
 
 //обробка кліків-пострілів
 void Shooting(HWND hWnd, LPARAM lParam) {
+    if (GAME_IS_OVER) return;
     int posX = LOWORD(lParam);
     int posY = HIWORD(lParam);
 
@@ -2351,6 +2356,7 @@ void Shooting(HWND hWnd, LPARAM lParam) {
                     message += L" won the game!\nTotal shots: ";
                     message += std::to_wstring(PlayerSetNow->CountShot);
                     MessageBoxW(hWnd, message.c_str(), L"Battleship", MB_OK);
+                    GAME_IS_OVER = true;
                     Peremoga(hWnd);
                     return;
                 }
@@ -2498,9 +2504,11 @@ void ResetPlayers() {
     Player2.IsFocus = 0;
     Player2.Kills = 0;
     Player2.Ready = 0;
+    GAME_IS_OVER = false;
 }
 //крок боту
 void BotStep(HWND hWnd) {
+    if (GAME_IS_OVER) return;
         int i = 0, j = 0;
         //якщо клікнули саме по цій клітинці
         i = rand() % numKol;
@@ -2545,6 +2553,7 @@ void BotStep(HWND hWnd) {
                     message += L" won the game!\nTotal shots: ";
                     message += std::to_wstring(PlayerOponent->CountShot);
                     MessageBoxW(hWnd, message.c_str(), L"Battleship", MB_OK);
+                    GAME_IS_OVER = true;
                     Peremoga(hWnd);
                     return;
                 }
