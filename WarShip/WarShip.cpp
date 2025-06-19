@@ -2351,8 +2351,12 @@ void Shooting(HWND hWnd, LPARAM lParam) {
                     //
                     InvalidateRect(hWnd, NULL, TRUE);
 
-                    // показати повідомлення про перемогу
-                    MessageBoxW(hWnd, L"Гравець Переміг!", L"кораблик", MB_OK);
+                    // сформувати повідомлення про перемогу з ім'ям гравця
+                    {
+                        std::wstring winMsg = PlayerSetNow->name;
+                        winMsg += L" переміг!";
+                        MessageBoxW(hWnd, winMsg.c_str(), L"кораблик", MB_OK);
+                    }
                     GAME_IS_OVER = true;
                     Peremoga(hWnd);
                     return;
@@ -2545,8 +2549,12 @@ void BotStep(HWND hWnd) {
                     // -//-
                     //
                     InvalidateRect(hWnd, NULL, TRUE);
-                    // показати повідомлення про перемогу
-                    MessageBoxW(hWnd, L"Гравець Переміг!", L"кораблик", MB_OK);
+                    // сформувати повідомлення про перемогу з ім'ям гравця
+                    {
+                        std::wstring winMsg = PlayerOponent->name;
+                        winMsg += L" переміг!";
+                        MessageBoxW(hWnd, winMsg.c_str(), L"кораблик", MB_OK);
+                    }
                     GAME_IS_OVER = true;
                     Peremoga(hWnd);
                     return;
